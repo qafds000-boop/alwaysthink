@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>週五私中特訓班 學習紀錄</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one working column — reminders strip, session picker, roster rows (cards on phones); summary as a scrollable table. */
+:root {
+  --bg: #F5F6F8; --surface: #FFFFFF; --surface-2: #EEF1F5; --line: #D9DEE5;
+  --ink: #1F2A36; --muted: #667383; --navy: #1A2F41; --gold: #ECC74F; --gold-soft: #FBF4DC;
+  --ok: #2E7D5B; --ok-soft: #E3F2EA; --warn: #A86A12; --warn-soft: #FCEFD8; --bad: #B23B2E; --bad-soft: #F9E3E0;
+  --cn: #B5653A; --en: #2F7D8C; --ma: #1A2F41; --on-accent: #FFFFFF;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --grid: #E3E7EC;
+  --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11171E; --surface: #18212B; --surface-2: #202B37; --line: #2E3B49;
+  --ink: #E6EBF1; --muted: #93A1B1; --navy: #9DB8D3; --gold: #E2BC45; --gold-soft: #3A3220;
+  --ok: #6CC79B; --ok-soft: #1B3328; --warn: #E7AE55; --warn-soft: #3A2C17; --bad: #F08A7E; --bad-soft: #3D211E;
+  --cn: #E59A70; --en: #6FC0CE; --ma: #9DB8D3; --on-accent: #11171E; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --grid: #26313D; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11171E; --surface: #18212B; --surface-2: #202B37; --line: #2E3B49;
+  --ink: #E6EBF1; --muted: #93A1B1; --navy: #9DB8D3; --gold: #E2BC45; --gold-soft: #3A3220;
+  --ok: #6CC79B; --ok-soft: #1B3328; --warn: #E7AE55; --warn-soft: #3A2C17; --bad: #F08A7E; --bad-soft: #3D211E;
+  --cn: #E59A70; --en: #6FC0CE; --ma: #9DB8D3; --on-accent: #11171E; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --grid: #26313D; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; border-bottom: 3px solid var(--gold); padding-bottom: 12px; }
+h1 { margin: 0; font-size: 1.45rem; color: var(--navy); letter-spacing: .02em; text-wrap: balance; }
+.sub { color: var(--muted); font-size: .85rem; }
+.tabs { display: flex; gap: 6px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tabs button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 500; padding: 7px 14px; border-radius: 7px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--navy); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.alerts { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.alerts h2, .panel h2 { margin: 0; font-size: 1rem; color: var(--navy); }
+.alert-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.alert { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: .85rem; border: 1px solid transparent; }
+.alert b { font-weight: 700; }
+.alert.bad { background: var(--bad-soft); color: var(--bad); }
+.alert.warn { background: var(--warn-soft); color: var(--warn); }
+.alert .act { border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px; font: inherit; font-size: .75rem; padding: 1px 8px; cursor: pointer; }
+.calm { color: var(--ok); font-size: .9rem; }
+
+.sessbar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.sess { flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 6px 10px; font: inherit; font-size: .85rem; cursor: pointer; display: grid; justify-items: center; line-height: 1.25; min-width: 58px; }
+.sess small { color: var(--muted); font-size: .7rem; }
+.sess[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--on-accent); }
+.sess[aria-pressed="true"] small { color: inherit; opacity: .8; }
+.sess .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-top: 2px; }
+.sess .dot.none { background: transparent; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.stats { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--ink); }
+.bulk { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 8px; font: inherit; font-size: .8rem; padding: 4px 10px; cursor: pointer; }
+
+.roster { display: grid; }
+.row { display: grid; grid-template-columns: 92px minmax(0, 1.35fr) minmax(0, 1.5fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.row.head { background: var(--surface-2); font-size: .75rem; color: var(--muted); letter-spacing: .05em; padding-block: 7px; }
+.row:last-child { border-bottom: 0; }
+.name { font-weight: 700; color: var(--navy); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: .78rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"].present, .seg button[aria-pressed="true"].ontime, .seg button[aria-pressed="true"].done { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); font-weight: 700; }
+.seg button[aria-pressed="true"].late, .seg button[aria-pressed="true"].sick, .seg button[aria-pressed="true"].personal { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); font-weight: 700; }
+.seg button[aria-pressed="true"].excused { background: var(--surface-2); color: var(--navy); border-color: var(--navy); font-weight: 700; }
+.seg button[aria-pressed="true"].absent, .seg button[aria-pressed="true"].missing, .seg button[aria-pressed="true"].undone { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); font-weight: 700; }
+.hw { display: grid; gap: 4px; }
+.hwline { display: flex; align-items: center; gap: 6px; }
+.tag { font-size: .72rem; font-weight: 700; width: 3.2em; flex: 0 0 auto; }
+.tag.cn { color: var(--cn); } .tag.en { color: var(--en); } .tag.ma { color: var(--ma); }
+.quiz { display: grid; gap: 6px; }
+.qline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: .8rem; }
+.wrong { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--muted); }
+.wrong input, .qline input { width: 3.6em; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; text-align: right; }
+.qline .of { color: var(--muted); }
+.pill { font-size: .7rem; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.note input { width: 100%; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-size: .85rem; }
+.lbl { display: none; font-size: .7rem; color: var(--muted); letter-spacing: .05em; margin-bottom: 2px; }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 980px; font-size: .85rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-2); color: var(--muted); font-size: .75rem; font-weight: 500; letter-spacing: .04em; white-space: nowrap; }
+td.num { text-align: center; }
+.meter { display: inline-flex; gap: 3px; vertical-align: middle; }
+.meter i { width: 10px; height: 10px; border-radius: 2px; background: var(--surface-2); border: 1px solid var(--line); }
+.meter i.on { background: var(--warn); border-color: var(--warn); }
+.meter i.over { background: var(--bad); border-color: var(--bad); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.check { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--muted); cursor: pointer; }
+.gate { padding: 28px 20px; max-width: 360px; margin: 40px auto; width: 100%; }
+.gate form { display: grid; gap: 10px; }
+.gate h2 { margin: 0; color: var(--navy); }
+.gate input { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+#app[hidden] { display: none !important; }
+.empty { padding: 28px 16px; color: var(--muted); text-align: center; }
+.foot { color: var(--muted); font-size: .78rem; }
+.banner { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 8px 12px; font-size: .85rem; }
+
+.todo { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: -2px; }
+.todo .alert { font-size: .78rem; padding: 3px 8px; }
+.todo input { width: 3.4em; padding: 1px 5px; border: 1px solid currentColor; border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; text-align: right; }
+.report-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.report-top select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px 16px; }
+.tile { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.tile .k { font-size: .75rem; color: var(--muted); }
+.tile .v { font-size: 1.25rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tile .v small { font-size: .75rem; color: var(--muted); font-weight: 500; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; padding: 0 16px 16px; }
+.chart { border: 1px solid var(--line); border-radius: 10px; padding: 12px; position: relative; min-width: 0; }
+.chart h3 { margin: 0 0 6px; font-size: .9rem; color: var(--navy); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart svg text { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.chart svg .gridl { stroke: var(--grid); stroke-width: 1; }
+.chart svg .pass { stroke: var(--bad); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.chart svg .passlbl { fill: var(--bad); font-weight: 700; }
+.chart svg .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart svg .pt { stroke: var(--surface); stroke-width: 2; }
+.chart svg .hit { fill: transparent; cursor: pointer; }
+.c-s1 { stroke: var(--s1); } .f-s1 { fill: var(--s1); } .b-s1 { background: var(--s1); }
+.c-s2 { stroke: var(--s2); } .f-s2 { fill: var(--s2); } .b-s2 { background: var(--s2); }
+.c-s3 { stroke: var(--s3); } .f-s3 { fill: var(--s3); } .b-s3 { background: var(--s3); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-size: .75rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -120%); }
+.nodata { color: var(--muted); font-size: .85rem; padding: 30px 0; text-align: center; }
+@media (max-width: 860px) {
+  .row.head { display: none; }
+  .row { grid-template-columns: 1fr; gap: 8px; }
+  .lbl { display: block; }
+}
+@media (prefers-reduced-motion: no-preference) { .seg button, .sess { transition: background .12s, color .12s, border-color .12s; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <section id="gate" class="panel gate" hidden>
+    <form id="gate-form">
+      <h2>週五私中特訓班　學習紀錄</h2>
+      <p class="sub">請輸入老師密碼</p>
+      <input id="gate-pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="密碼">
+      <button type="submit" class="bulk">進入</button>
+      <p id="gate-msg" class="sub" style="color:var(--bad)"></p>
+    </form>
+  </section>
+  <div id="app" style="display:contents">
+  <header class="top">
+    <div>
+      <h1>週五私中特訓班　學習紀錄</h1>
+      <div class="sub">金牌躍騰內壢校｜每週五 18:00–20:00｜點名、作業繳交、小考成績</div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button id="tab-class" role="tab" aria-selected="true">上課紀錄</button>
+      <button id="tab-sum" role="tab" aria-selected="false">學生總覽</button>
+      <button id="tab-rep" role="tab" aria-selected="false">學習報表</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="alerts" aria-live="polite">
+    <h2>需要處理</h2>
+    <div id="alerts" class="alert-list"><span class="calm">資料載入中…</span></div>
+  </section>
+
+  <div id="view-class">
+    <nav class="sessbar" id="sessbar" aria-label="選擇上課日期"></nav>
+    <section class="panel" style="margin-top:12px">
+      <div class="panel-head">
+        <h2 id="sess-title">第 1 堂</h2>
+        <div class="stats" id="sess-stats"></div>
+        <button class="bulk" id="all-present">全班出席</button>
+      </div>
+      <div class="roster" id="roster"></div>
+    </section>
+  </div>
+
+  <div id="view-sum" hidden>
+    <section class="panel">
+      <div class="panel-head"><h2>學生總覽</h2><div class="stats">事假上限 1 堂（遲到 15 分以上累計 2 次折 1 堂、未請假缺席算 1 堂；缺席免計不算）｜病假上限 2 堂｜小考 40 分以上通過</div></div>
+      <div class="tablewrap"><table id="sumtable"></table></div>
+    </section>
+  </div>
+
+  <div id="view-rep" hidden>
+    <section class="panel">
+      <div class="report-top"><h2 style="margin:0;font-size:1rem;color:var(--navy)">學習報表</h2>
+        <label for="rep-student" class="sub">學生</label><select id="rep-student"></select></div>
+      <div class="tiles" id="rep-tiles"></div>
+      <div class="charts">
+        <div class="chart" id="chart-score"></div>
+        <div class="chart" id="chart-wrong"></div>
+      </div>
+      <div class="tablewrap" style="border-top:1px solid var(--line)"><table id="rep-table"></table></div>
+    </section>
+  </div>
+
+  <p class="foot"><span id="sync"></span>　作業紀錄：同一次繳交期限，任一科遲交或未交即記 1 次；第 1 次通知家長，累計第 2 次由主任與親子討論。小考未滿 40 分須重新複習，下次上課補考。</p>
+  </div>
+</div>
+
+<script>
+/* ===== 設定：把 Apps Script 部署後的網址貼在這裡 ===== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwl-PgAc7ZFWfM4lXhqlXOorSsFjIvQilWWhZG6EbxfBTFxlM_T84yK1V9DEnh65n8O9Q/exec';
+
+const SESS = [
+  [1,'11/13','國文'],[2,'11/20','英文'],[3,'11/27','數學'],[4,'12/04','國文'],[5,'12/11','英文'],[6,'12/18','數學'],
+  [7,'01/08','國文'],[8,'01/15','英文'],[9,'01/22','數學'],[10,'01/29','國文'],[11,'02/12','英文'],[12,'02/19','數學'],
+  [13,'02/26','國文'],[14,'03/05','英文'],[15,'03/12','數學'],
+].map(([n,d,main]) => ({ n, d, main, year: n <= 6 ? 2026 : 2027 }));
+const ATT = [['present','出席'],['late','遲到15分以上'],['personal','事假'],['sick','病假'],['absent','未請假'],['excused','缺席免計']];
+const HW = [['ontime','準時'],['late','遲交'],['missing','未交']];
+const SUBJ = [['cn','國特','國文特訓本'],['en','英特','英文特訓閱讀本'],['ma','數學','數學難題特訓']];
+const PASS = 40;
+
+let students = [], recs = {}, current = pickToday(), loaded = { s: false, r: false }, readOnly = false;
+let pendingRender = false, repSid = null;
+const ATTL = Object.fromEntries([['present','出席'],['late','遲到'],['personal','事假'],['sick','病假'],['absent','未請假'],['excused','缺席免計']]);
+const HWL = { ontime: '準時', late: '遲交', missing: '未交' };
+function lineChart(box, title, series, { yMax, pass, unit, xs }) {
+  box.replaceChildren(el('h3', { text: title }));
+  const has = series.some(se => se.values.some(v => typeof v === 'number'));
+  box.append(el('div', { class: 'legend' }, series.map(se => el('span', {}, el('i', { class: 'b-' + se.cls }), se.name))));
+  if (!has) { box.append(el('div', { class: 'nodata', text: '還沒有資料，上課登記後會自動畫出來。' })); return; }
+  const W = 560, H = 200, L = 34, R = 12, T = 10, B = 26, NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, a) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
+  const svg = mk('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': title });
+  const x = (i) => L + (xs.length === 1 ? 0 : i * (W - L - R) / (xs.length - 1));
+  const y = (v) => T + (1 - v / yMax) * (H - T - B);
+  const step = yMax <= 10 ? 2 : yMax <= 25 ? 5 : 10;
+  for (let v = 0; v <= yMax; v += step) {
+    svg.append(mk('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gridl' }));
+    const t = mk('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end' }); t.textContent = v; svg.append(t);
+  }
+  xs.forEach((s, i) => { if (xs.length <= 8 || i % 2 === 0 || i === xs.length - 1) { const t = mk('text', { x: x(i), y: H - 8, 'text-anchor': 'middle' }); t.textContent = s.d; svg.append(t); } });
+  if (pass != null) {
+    svg.append(mk('line', { x1: L, x2: W - R, y1: y(pass), y2: y(pass), class: 'pass' }));
+    const t = mk('text', { x: W - R, y: y(pass) - 5, 'text-anchor': 'end', class: 'passlbl' }); t.textContent = `通過 ${pass}`; svg.append(t);
+  }
+  const tip = el('div', { class: 'tip', hidden: true });
+  for (const se of series) {
+    let d = '', pen = false;
+    se.values.forEach((v, i) => { if (typeof v === 'number') { d += (pen ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; pen = true; } else pen = false; });
+    svg.append(mk('path', { d, class: 'ln c-' + se.cls }));
+    se.values.forEach((v, i) => {
+      if (typeof v !== 'number') return;
+      svg.append(mk('circle', { cx: x(i), cy: y(v), r: 4.5, class: 'pt f-' + se.cls }));
+      const hit = mk('circle', { cx: x(i), cy: y(v), r: 11, class: 'hit' });
+      const show = () => { const bw = svg.getBoundingClientRect(), bb = box.getBoundingClientRect(); tip.textContent = `${xs[i].d}　${se.name} ${v}${unit}`; tip.style.left = (bw.left - bb.left + x(i) / W * bw.width) + 'px'; tip.style.top = (bw.top - bb.top + y(v) / H * bw.height) + 'px'; tip.hidden = false; };
+      hit.addEventListener('mouseenter', show); hit.addEventListener('focus', show); hit.addEventListener('mouseleave', () => tip.hidden = true); hit.addEventListener('blur', () => tip.hidden = true);
+      hit.setAttribute('tabindex', '0');
+      svg.append(hit);
+    });
+  }
+  box.append(svg, tip);
+}
+function renderReport() {
+  const sel = $('rep-student');
+  if (!students.length) { sel.replaceChildren(); $('rep-tiles').replaceChildren(el('div', { class: 'nodata', text: '還沒有學生名單。' })); $('chart-score').replaceChildren(); $('chart-wrong').replaceChildren(); $('rep-table').replaceChildren(); return; }
+  if (!repSid || !students.some(s => s.id === repSid)) repSid = students[0].id;
+  if (sel.options.length !== students.length) sel.replaceChildren(...students.map(s => el('option', { value: s.id, text: s.name })));
+  sel.value = repSid;
+  const sid = repSid, st = studentStats(sid);
+  const quizS = SESS.filter(s => hasQuiz(s.n));
+  const eff = (r, k) => { const v = r[k], re = r[k + 'Re']; return typeof v === 'number' ? v : null; };
+  const zyArr = quizS.map(s => eff(rec(s.n, sid), 'zy')), vArr = quizS.map(s => eff(rec(s.n, sid), 'voc'));
+  const avg = (a) => { const b = a.filter(v => typeof v === 'number'); return b.length ? (b.reduce((p, q) => p + q, 0) / b.length).toFixed(1) : '—'; };
+  const passN = [...zyArr, ...vArr].filter(v => typeof v === 'number'), passRate = passN.length ? Math.round(passN.filter(v => v >= PASS).length / passN.length * 100) + '%' : '—';
+  const hwAll = SESS.filter(s => hasHw(s.n)).flatMap(s => { const r = rec(s.n, sid); return r.hw ? SUBJ.map(([k]) => r.hw[k]).filter(Boolean) : []; });
+  const hwRate = hwAll.length ? Math.round(hwAll.filter(v => v === 'ontime').length / hwAll.length * 100) + '%' : '—';
+  const tile = (k, v, sub) => el('div', { class: 'tile' }, el('div', { class: 'k', text: k }), el('div', { class: 'v' }, v, sub ? el('small', { text: ' ' + sub }) : null));
+  $('rep-tiles').replaceChildren(
+    tile('出席', String(st.present), `堂・遲到 ${st.late}`),
+    tile('事假（折計）／病假', `${st.personalEq}／${st.sick}`, '上限 1／2'),
+    tile('作業準時率', hwRate, `作業紀錄 ${st.hwRecs.length} 次`),
+    tile('字音字形平均', avg(zyArr), '/50'),
+    tile('英文單字平均', avg(vArr), '/50'),
+    tile('小考通過率', passRate, st.pending.length ? `待補考 ${st.pending.length}` : ''),
+  );
+  lineChart($('chart-score'), '小考成績（/50）', [{ name: '字音字形', cls: 's1', values: zyArr }, { name: '英文單字', cls: 's2', values: vArr }], { yMax: 50, pass: PASS, unit: ' 分', xs: quizS });
+  const wr = (k) => SESS.map(s => { const r = rec(s.n, sid); return r.wrong && typeof r.wrong[k] === 'number' ? r.wrong[k] : null; });
+  const allW = ['cn','en','ma'].flatMap(k => wr(k)).filter(v => typeof v === 'number');
+  const wMax = Math.max(10, Math.ceil((allW.length ? Math.max(...allW) : 10) / 5) * 5);
+  lineChart($('chart-wrong'), '特訓本錯題數（越低越好）', [{ name: '國文特訓本', cls: 's1', values: wr('cn') }, { name: '英文特訓閱讀本', cls: 's2', values: wr('en') }, { name: '數學', cls: 's3', values: wr('ma') }], { yMax: wMax, pass: null, unit: ' 題', xs: SESS });
+  const t = $('rep-table'); t.replaceChildren();
+  t.append(el('thead', {}, el('tr', {}, ['堂次', '日期', '出席', '國文特訓本', '英文特訓閱讀本', '數學', '字音字形', '英文單字', '備註'].map(h => el('th', { text: h })))));
+  const body = el('tbody');
+  for (const s of SESS) {
+    const r = rec(s.n, sid);
+    const hwc = (k) => { const a = r.hw && r.hw[k] ? HWL[r.hw[k]] + (r.hw[k] === 'missing' && r.hwMade && r.hwMade[k] ? '（已補交）' : '') : ''; const w = r.wrong && typeof r.wrong[k] === 'number' ? `錯 ${r.wrong[k]}` : ''; return [a, w].filter(Boolean).join('・') || '—'; };
+    const qc = (k) => { const v = r[k], re = r[k + 'Re']; if (typeof v !== 'number') return '—'; return v + (v < PASS ? (typeof re === 'number' ? `（補考 ${re}）` : '（待補考）') : ''); };
+    body.append(el('tr', {}, el('td', { class: 'num', text: String(s.n) }), el('td', { text: s.d }), el('td', { text: r.att ? ATTL[r.att] : '—' }),
+      el('td', { text: hwc('cn') }), el('td', { text: hwc('en') }), el('td', { text: hwc('ma') }), el('td', { text: qc('zy') }), el('td', { text: qc('voc') }), el('td', { text: r.note || '' })));
+  }
+  t.append(body);
+}
+
+function pickToday() {
+  const now = new Date();
+  let best = 1;
+  for (const s of SESS) {
+    const [m, d] = s.d.split('/').map(Number);
+    if (new Date(s.year, m - 1, d) <= now) best = s.n;
+  }
+  return best;
+}
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null) e.append(k.nodeType ? k : document.createTextNode(k));
+  return e;
+};
+const rec = (n, sid) => (recs[n] && recs[n].records && recs[n].records[sid]) || {};
+const hasQuiz = (n) => n >= 2;
+const hasHw = (n) => n >= 2;
+
+/* ---------- 後端：Google Apps Script ---------- */
+let pin = '';
+try { pin = localStorage.getItem('fri_pin') || ''; } catch (e) {}
+let writeQueue = Promise.resolve(), pendingWrites = 0;
+async function api(body) {
+  const res = body
+    ? await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...body, pin }) })
+    : await fetch(API_URL + '?action=all&pin=' + encodeURIComponent(pin));
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'error');
+  return j;
+}
+function flatten(obj, prefix = '') {
+  const out = [];
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? prefix + '.' + k : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else out.push([key, v]);
+  }
+  return out;
+}
+function writeSession(n, patch) {
+  recs[n] = deepMerge(recs[n] || { n, records: {} }, patch);
+  render();
+  const updates = [];
+  for (const [sid, fields] of Object.entries(patch.records || {})) for (const [key, value] of flatten(fields)) updates.push({ n, sid, key, value: value === undefined ? null : value });
+  enqueue({ action: 'update', updates });
+}
+function writeStudent(sid, patch) {
+  const s = students.find(x => x.id === sid); if (s) Object.assign(s, patch);
+  render();
+  enqueue({ action: 'student', sid, patch });
+}
+function enqueue(body) {
+  pendingWrites++; setSync('儲存中…');
+  writeQueue = writeQueue.then(async () => {
+    try { const j = await api(body); applyData(j); setSync('已儲存'); }
+    catch (e) { showBanner(e.message === 'pin' ? '密碼錯誤，紀錄沒有存到。請重新輸入密碼。' : '剛才的修改沒有存到，請檢查網路後再試一次。'); setSync('未儲存'); }
+    finally { pendingWrites--; }
+  });
+}
+function applyData(j) {
+  students = j.students.slice().sort((a, b) => a.order - b.order);
+  const next = {};
+  for (const r of j.records) { (next[r.n] ||= { n: r.n, records: {} }).records[r.sid] = r.data; }
+  recs = next; loaded.s = true; loaded.r = true;
+  render();
+}
+function setSync(t) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
+function deepMerge(a, b) {
+  const out = Array.isArray(a) ? a.slice() : { ...(a || {}) };
+  for (const [k, v] of Object.entries(b)) out[k] = v && typeof v === 'object' && !Array.isArray(v) ? deepMerge(out[k], v) : v;
+  return out;
+}
+function showBanner(t) { const b = $('banner'); b.textContent = t; b.hidden = !t; }
+
+/* ---------- derived stats ---------- */
+function studentStats(sid) {
+  let missingHw = [], present = 0, late = 0, personal = 0, sick = 0, absent = 0, excused = 0, hwRecs = [], scores = [], pending = [], wrong = { cn: 0, en: 0, ma: 0 }, wrongN = { cn: 0, en: 0, ma: 0 };
+  for (const s of SESS) {
+    const r = rec(s.n, sid);
+    if (r.att === 'present') present++; else if (r.att === 'late') { late++; present++; }
+    else if (r.att === 'personal') personal++; else if (r.att === 'sick') sick++; else if (r.att === 'absent') absent++; else if (r.att === 'excused') excused++;
+    if (r.wrong) for (const k of ['cn','en','ma']) if (typeof r.wrong[k] === 'number') { wrong[k] += r.wrong[k]; wrongN[k]++; }
+    if (hasHw(s.n) && r.hw) for (const [k, , full] of SUBJ) if (r.hw[k] === 'missing' && !(r.hwMade && r.hwMade[k])) missingHw.push({ n: s.n, d: s.d, k, full });
+    if (hasHw(s.n) && r.hw && SUBJ.some(([k]) => r.hw[k] === 'late' || r.hw[k] === 'missing')) hwRecs.push(s.n);
+    if (hasQuiz(s.n)) for (const [k, label] of [['zy','字音字形'],['voc','單字']]) {
+      const v = r[k];
+      if (typeof v === 'number') {
+        scores.push(v);
+        const re = r[k + 'Re'];
+        if (v < PASS && !(typeof re === 'number' && re >= PASS)) pending.push({ n: s.n, d: s.d, label, v, re });
+      }
+    }
+  }
+  const personalEq = personal + absent + Math.floor(late / 2);
+  return { missingHw, present, late, personal, sick, absent, excused, personalEq, hwRecs, pending, wrong, wrongN, total: scores.reduce((a, b) => a + b, 0), count: scores.length };
+}
+function alertsFor(st, s) {
+  const out = [];
+  if (st.hwRecs.length >= 2 && !s.talked) out.push(['bad', `作業紀錄累計 ${st.hwRecs.length} 次`, '需主任約談', 'talked']);
+  else if (st.hwRecs.length === 1 && !s.notified) out.push(['warn', '作業紀錄第 1 次', '需通知家長', 'notified']);
+  if (st.personalEq > 1) out.push(['bad', `事假折計 ${st.personalEq} 堂`, '超過上限，需與家長確認']);
+  else if (st.personalEq === 1) out.push(['warn', '事假額度已用完', '']);
+  if (st.sick > 2) out.push(['bad', `病假 ${st.sick} 堂`, '超過上限，需與家長確認']);
+  else if (st.sick === 2) out.push(['warn', '病假額度已用完', '']);
+  for (const p of st.pending) out.push(['warn', `${p.d} ${p.label} ${p.v} 分`, '待補考']);
+  for (const m of st.missingHw) out.push(['warn', `${m.d} ${m.full}`, '缺交待補']);
+  return out;
+}
+
+/* ---------- render ---------- */
+function render() {
+  if (document.activeElement && document.activeElement.matches && document.activeElement.matches('#roster input')) { pendingRender = true; return; }
+  pendingRender = false;
+  renderAlerts(); renderSessbar(); renderRoster(); renderSummary(); renderReport();
+}
+function renderAlerts() {
+  const box = $('alerts'); box.replaceChildren();
+  if (!loaded.s) { box.append(el('span', { class: 'calm', text: '資料載入中…' })); return; }
+  if (!students.length) { box.append(el('span', { class: 'calm', text: '還沒有學生名單。' })); return; }
+  let any = false;
+  for (const s of students) {
+    for (const [lvl, what, todo, flag] of alertsFor(studentStats(s.id), s)) {
+      any = true;
+      box.append(el('span', { class: 'alert ' + lvl }, el('b', { text: s.name }), ' ' + what + (todo ? '｜' + todo : ''),
+        flag ? el('button', { class: 'act', onclick: () => writeStudent(s.id, { [flag]: true }), disabled: readOnly }, flag === 'talked' ? '已約談' : '已通知') : null));
+    }
+  }
+  if (!any) box.append(el('span', { class: 'calm', text: '目前沒有需要處理的事項。' }));
+}
+function renderSessbar() {
+  const bar = $('sessbar'); bar.replaceChildren();
+  for (const s of SESS) {
+    const filled = recs[s.n] && recs[s.n].records && Object.values(recs[s.n].records).some(r => r.att);
+    bar.append(el('button', { class: 'sess', 'aria-pressed': String(s.n === current), onclick: () => { current = s.n; render(); } },
+      el('span', { text: s.d }), el('small', { text: `第 ${s.n} 堂・${s.main}` }), el('span', { class: 'dot' + (filled ? '' : ' none') })));
+  }
+}
+function segment(options, value, onPick, kind) {
+  return el('div', { class: 'seg', role: 'group' }, options.map(([v, label]) =>
+    el('button', { class: v, 'aria-pressed': String(value === v), disabled: readOnly, onclick: () => onPick(value === v ? null : v) }, label)));
+}
+function numInput(id, value, max, onSet) {
+  return el('input', { id, type: 'number', inputmode: 'numeric', min: 0, max, value: typeof value === 'number' ? value : '', disabled: readOnly, 'aria-label': '錯題數',
+    style: 'width:4em',
+    onchange: (e) => { const t = e.target.value.trim(); onSet(t === '' ? null : Math.max(0, Math.min(max, Math.round(Number(t))))); },
+    onkeydown: (e) => { if (e.key === 'Enter') e.target.blur(); },
+    onblur: () => { if (pendingRender) setTimeout(render, 0); } });
+}
+function scoreInput(n, sid, key, value) {
+  return el('input', { id: `in-${n}-${sid}-${key}`, type: 'number', inputmode: 'numeric', min: 0, max: 50, value: typeof value === 'number' ? value : '', disabled: readOnly, 'aria-label': key,
+    onchange: (e) => { const t = e.target.value.trim(); const v = t === '' ? null : Math.max(0, Math.min(50, Number(t))); writeSession(n, { records: { [sid]: { [key]: v } } }); },
+    onkeydown: (e) => { if (e.key === 'Enter') e.target.blur(); },
+    onblur: () => { if (pendingRender) setTimeout(render, 0); } });
+}
+function renderRoster() {
+  const s = SESS.find(x => x.n === current);
+  $('sess-title').textContent = `第 ${s.n} 堂　${s.year}/${s.d}（五）・主要科目 ${s.main}`;
+  const box = $('roster'); box.replaceChildren();
+  if (!loaded.s) { box.append(el('div', { class: 'empty', text: '正在讀取學生名單…' })); return; }
+  if (!students.length) { box.append(el('div', { class: 'empty', text: '還沒有學生名單。請 Claude 加入名單後，這裡會列出每位學生。' })); $('sess-stats').replaceChildren(); return; }
+  box.append(el('div', { class: 'row head' }, el('div', { text: '學生' }), el('div', { text: '出席' }),
+    el('div', { text: hasHw(s.n) ? '作業繳交（上週發下）／特訓本錯題數' : '特訓本錯題數' }), el('div', { text: hasQuiz(s.n) ? '小考（滿分 50）' : '小考' }), el('div', { text: '備註' })));
+  let att = 0, zsum = 0, zc = 0, vsum = 0, vc = 0, hwBad = 0;
+  for (const st of students) {
+    const r = rec(s.n, st.id);
+    if (r.att === 'present' || r.att === 'late') att++;
+    if (typeof r.zy === 'number') { zsum += r.zy; zc++; }
+    if (typeof r.voc === 'number') { vsum += r.voc; vc++; }
+    if (r.hw && SUBJ.some(([k]) => r.hw[k] === 'late' || r.hw[k] === 'missing')) hwBad++;
+    const hwBox = el('div', { class: 'hw' }, SUBJ.map(([k, short, full]) => el('div', { class: 'hwline', title: full },
+          el('span', { class: 'tag ' + k, text: short }),
+          hasHw(s.n) ? segment(HW, r.hw && r.hw[k], (v) => writeSession(s.n, { records: { [st.id]: { hw: { [k]: v } } } })) : null,
+          el('span', { class: 'wrong' }, '錯', numInput(`wr-${s.n}-${st.id}-${k}`, r.wrong && r.wrong[k], 999, (v) => writeSession(s.n, { records: { [st.id]: { wrong: { [k]: v } } } })), '題'))));
+    const quizLine = (key, label) => {
+      const v = r[key], re = r[key + 'Re'];
+      const parts = [el('span', { text: label }), scoreInput(s.n, st.id, key, v), el('span', { class: 'of', text: '/50' })];
+      if (typeof v === 'number') parts.push(v >= PASS ? el('span', { class: 'pill ok', text: '通過' }) : el('span', { class: 'pill bad', text: '未通過' }));
+      if (typeof v === 'number' && v < PASS) {
+        parts.push(el('span', { class: 'of', text: '補考' }), scoreInput(s.n, st.id, key + 'Re', re));
+        if (typeof re === 'number') parts.push(re >= PASS ? el('span', { class: 'pill ok', text: '補考通過' }) : el('span', { class: 'pill warn', text: '再補考' }));
+      }
+      return el('div', { class: 'qline' }, parts);
+    };
+    const quizBox = hasQuiz(s.n) ? el('div', { class: 'quiz' }, quizLine('zy', '字音字形'), quizLine('voc', '英文單字')) : el('div', { class: 'foot', text: '第一堂不考' });
+    const todo = outstanding(st.id, s.n);
+    box.append(el('div', { class: 'row' },
+      el('div', { class: 'name', text: st.name }),
+      el('div', {}, el('div', { class: 'lbl', text: '出席' }), segment(ATT, r.att, (v) => writeSession(s.n, { records: { [st.id]: { att: v } } }))),
+      el('div', {}, el('div', { class: 'lbl', text: hasHw(s.n) ? '作業繳交／錯題數' : '特訓本錯題數' }), hwBox),
+      el('div', {}, el('div', { class: 'lbl', text: '小考' }), quizBox),
+      el('div', { class: 'note' }, el('div', { class: 'lbl', text: '備註' }),
+        el('input', { id: `note-${s.n}-${st.id}`, type: 'text', placeholder: '備註', value: r.note || '', disabled: readOnly,
+          onchange: (e) => writeSession(s.n, { records: { [st.id]: { note: e.target.value } } }),
+          onblur: () => { if (pendingRender) setTimeout(render, 0); } })),
+      todo.length ? el('div', { class: 'todo' }, todo) : null,
+    ));
+  }
+  const stats = $('sess-stats'); stats.replaceChildren(
+    el('span', {}, '出席 ', el('b', { text: `${att}/${students.length}` })),
+    ...(hasHw(s.n) ? [el('span', {}, '作業有紀錄 ', el('b', { text: String(hwBad) }), ' 人')] : []),
+    ...(hasQuiz(s.n) ? [el('span', {}, '字音字形平均 ', el('b', { text: zc ? (zsum / zc).toFixed(1) : '—' })), el('span', {}, '單字平均 ', el('b', { text: vc ? (vsum / vc).toFixed(1) : '—' }))] : []),
+  );
+  $('all-present').disabled = readOnly;
+}
+function outstanding(sid, n) {
+  const out = [];
+  for (const s of SESS) {
+    if (s.n >= n) break;
+    const r = rec(s.n, sid);
+    if (hasQuiz(s.n)) for (const [k, label] of [['zy','字音字形'],['voc','英文單字']]) {
+      const v = r[k], re = r[k + 'Re'];
+      if (typeof v === 'number' && v < PASS && !(typeof re === 'number' && re >= PASS)) {
+        out.push(el('span', { class: 'alert bad' }, el('b', { text: '補考' }), ` ${s.d} ${label} ${v} 分` + (typeof re === 'number' ? `（上次補考 ${re}）` : '') + ' → ',
+          el('input', { id: `re-${s.n}-${sid}-${k}-at${n}`, type: 'number', inputmode: 'numeric', min: 0, max: 50, disabled: readOnly, 'aria-label': '補考分數',
+            onchange: (e) => { const t = e.target.value.trim(); if (t === '') return; writeSession(s.n, { records: { [sid]: { [k + 'Re']: Math.max(0, Math.min(50, Number(t))) } } }); },
+            onkeydown: (e) => { if (e.key === 'Enter') e.target.blur(); }, onblur: () => { if (pendingRender) setTimeout(render, 0); } }), ' /50'));
+      }
+    }
+    if (hasHw(s.n) && r.hw) for (const [k, , full] of SUBJ) if (r.hw[k] === 'missing' && !(r.hwMade && r.hwMade[k])) {
+      out.push(el('span', { class: 'alert warn' }, el('b', { text: '缺交' }), ` 第 ${s.n} 堂（${s.d}）${full}`,
+        el('button', { class: 'act', disabled: readOnly, onclick: () => writeSession(s.n, { records: { [sid]: { hwMade: { [k]: true } } } }) }, '已補交')));
+    }
+  }
+  return out;
+}
+function meter(used, cap) {
+  const n = Math.max(cap, used);
+  return el('span', { class: 'meter', title: `${used}/${cap}` }, Array.from({ length: n }, (_, i) => el('i', { class: i < used ? (i >= cap ? 'over' : 'on') : '' })));
+}
+function renderSummary() {
+  const t = $('sumtable'); t.replaceChildren();
+  t.append(el('thead', {}, el('tr', {}, ['學生', '出席', '遲到', '事假（折計）', '病假', '作業紀錄', '特訓本錯題累計', '小考平均', '待補考', '處理狀況'].map(h => el('th', { text: h })))));
+  const body = el('tbody');
+  if (!students.length) body.append(el('tr', {}, el('td', { colspan: 10, class: 'empty', text: loaded.s ? '還沒有學生名單。' : '讀取中…' })));
+  for (const s of students) {
+    const st = studentStats(s.id);
+    body.append(el('tr', {},
+      el('td', { class: 'name', text: s.name }),
+      el('td', { class: 'num' }, String(st.present), st.excused ? el('div', { class: 'foot', text: `缺席免計 ${st.excused}` }) : null),
+      el('td', { class: 'num', text: String(st.late) }),
+      el('td', {}, meter(st.personalEq, 1), ` ${st.personalEq}/1`),
+      el('td', {}, meter(st.sick, 2), ` ${st.sick}/2`),
+      el('td', {}, st.hwRecs.length ? el('span', { class: 'pill ' + (st.hwRecs.length >= 2 ? 'bad' : 'warn'), text: `${st.hwRecs.length} 次` }) : el('span', { class: 'pill ok', text: '0' }),
+        st.hwRecs.length ? el('div', { class: 'foot', text: st.hwRecs.map(n => SESS[n - 1].d).join('、') }) : null),
+      el('td', {}, el('div', { class: 'chips' }, SUBJ.map(([k, short]) => el('span', { class: 'wrong' }, el('span', { class: 'tag ' + k, text: short, style: 'width:auto' }), st.wrongN[k] ? String(st.wrong[k]) : '—')))),
+      el('td', { class: 'num', text: st.count ? (st.total / st.count).toFixed(1) : '—' }),
+      el('td', {}, st.pending.length ? el('div', { class: 'chips' }, st.pending.map(p => el('span', { class: 'pill warn', text: `${p.d} ${p.label}` }))) : '—'),
+      el('td', {}, el('div', { class: 'chips' },
+        el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: !!s.notified, disabled: readOnly, onchange: (e) => writeStudent(s.id, { notified: e.target.checked }) }), '已通知家長'),
+        el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: !!s.talked, disabled: readOnly, onchange: (e) => writeStudent(s.id, { talked: e.target.checked }) }), '主任已約談'))),
+    ));
+  }
+  t.append(body);
+}
+
+/* ---------- tabs & bulk ---------- */
+function setTab(which) {
+  for (const [t, v] of [['class','class'],['sum','sum'],['rep','rep']]) {
+    $('tab-' + t).setAttribute('aria-selected', String(which === t)); $('view-' + v).hidden = which !== t;
+  }
+}
+$('tab-rep').addEventListener('click', () => setTab('rep'));
+$('rep-student').addEventListener('change', (e) => { repSid = e.target.value; renderReport(); });
+$('tab-class').addEventListener('click', () => setTab('class'));
+$('tab-sum').addEventListener('click', () => setTab('sum'));
+$('all-present').addEventListener('click', () => {
+  const patch = { records: {} };
+  for (const s of students) if (!rec(current, s.id).att) patch.records[s.id] = { att: 'present' };
+  if (Object.keys(patch.records).length) writeSession(current, patch);
+});
+
+/* ---------- boot ---------- */
+async function refresh(silent) {
+  if (pendingWrites || (document.activeElement && document.activeElement.matches && document.activeElement.matches('input'))) return;
+  try { applyData(await api()); setSync('已同步 ' + new Date().toTimeString().slice(0, 5)); showBanner(''); }
+  catch (e) {
+    if (e.message === 'pin') { try { localStorage.removeItem('fri_pin'); } catch (x) {} pin = ''; showGate('密碼不正確，請再輸入一次。'); }
+    else if (!silent) showBanner('讀不到紀錄資料，請確認網路後重新整理。');
+  }
+}
+function showGate(msg) { $('gate').hidden = false; $('gate-msg').textContent = msg || ''; $('app').hidden = true; }
+$('gate-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  pin = $('gate-pin').value.trim(); if (!pin) return;
+  try { localStorage.setItem('fri_pin', pin); } catch (x) {}
+  $('gate').hidden = true; $('app').hidden = false; await refresh();
+});
+render();
+if (!API_URL || API_URL.includes('貼上')) { showBanner('尚未設定 API_URL：請把 Apps Script 部署網址貼到 index.html 最上方的 API_URL。'); loaded.s = true; render(); }
+else if (!pin) showGate();
+else refresh();
+setInterval(() => { if (!document.hidden && pin) refresh(true); }, 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && pin) refresh(true); });
+</script>
+
+</body>
+</html>
